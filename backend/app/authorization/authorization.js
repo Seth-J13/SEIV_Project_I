@@ -39,3 +39,14 @@ export const authenticate = async (req, res, next) => {
     return res.status(500).send({ message: error.message });
   }
 };
+
+export const getAccessibleListOrNull = async (req, listId) => {
+  const parsedId = parseInt(listId, 10);
+  if (isNaN(parsedId)) {
+    return null;
+  }
+  const row = await db.list.findOne({
+    where: { id: parsedId, userId: req.user.id },
+  });
+  return row ?? null;
+};
