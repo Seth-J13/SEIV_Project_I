@@ -61,3 +61,12 @@ export const getAccessibleTodoOrNull = async (req, todoId) => {
   });
   return row ?? null;
 };
+
+export const getAccessibleUserOrNull = async (req, userId) => {
+  const parsedId = parseInt(userId, 10);
+  if (isNaN(parsedId) || parsedId !== req.user.id) {
+    return null;
+  }
+  const row = await db.user.findByPk(parsedId);
+  return row ?? null;
+};

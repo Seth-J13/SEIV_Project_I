@@ -1,6 +1,6 @@
 # API Reference
 
-**Status:** Integrated snapshot on `dev` (Features 1–3).
+**Status:** Integrated snapshot on `dev` (Features 1–4).
 
 Base mount path: `/todo` (Express server).
 
@@ -11,6 +11,7 @@ Base mount path: `/todo` (Express server).
 | Authentication & Sessions (`/register`, `/login`, `/logout`) | Feature 1 |
 | Todo Lists (`/lists`, `/lists/:listId`) | Feature 2 |
 | Todo Items (`/lists/:listId/todos`, `/todos/:id`) | Feature 3 |
+| User Profile (`/users/:id`) | Feature 4 |
 
 ## Endpoints
 
@@ -27,6 +28,8 @@ Base mount path: `/todo` (Express server).
 | `POST` | `/todo/lists/:listId/todos` | Yes | Add a todo to an owned list |
 | `PUT` | `/todo/todos/:id` | Yes | Update a todo (title and/or completed) |
 | `DELETE` | `/todo/todos/:id` | Yes | Delete an owned todo |
+| `GET` | `/todo/users/:id` | Yes | Fetch authenticated user's profile |
+| `PUT` | `/todo/users/:id` | Yes | Update authenticated user's profile |
 
 ### Register (`POST /todo/register`)
 
@@ -239,9 +242,58 @@ Base mount path: `/todo` (Express server).
 }
 ```
 
+### Get User Profile (`GET /todo/users/:id`)
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Success response (`200 OK`):**
+```json
+{
+  "id": 42,
+  "fName": "Jane",
+  "lName": "Doe",
+  "email": "jane@example.com",
+  "username": "jdoe",
+  "role": "worker",
+  "createdAt": "2026-07-02T12:00:00.000Z",
+  "updatedAt": "2026-07-02T12:05:00.000Z"
+}
+```
+
+### Update User Profile (`PUT /todo/users/:id`)
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request body:**
+```json
+{
+  "fName": "Jane",
+  "lName": "Doe",
+  "email": "jane@example.com",
+  "username": "jdoe",
+  "password": "newpassword123"
+}
+```
+
+`password` is optional.
+
+**Success response (`200 OK`):**
+```json
+{
+  "id": 42,
+  "fName": "Jane",
+  "lName": "Doe",
+  "email": "jane@example.com",
+  "username": "jdoe",
+  "role": "worker",
+  "createdAt": "2026-07-02T12:00:00.000Z",
+  "updatedAt": "2026-07-02T12:05:00.000Z"
+}
+```
+
 ## Conventions
 
 - Flat JSON responses (no `{ success, data }` envelope).
 - Errors: `{ "message": "Human-readable explanation." }` with appropriate HTTP status code.
-- Not found / not owned: `404` with `{ "message": "List with id=<id> not found." }` or `{ "message": "Todo with id=<id> not found." }` (never leak existence with `403`).
+- Not found / not owned: `404` with `{ "message": "List with id=<id> not found." }`, `{ "message": "Todo with id=<id> not found." }`, or `{ "message": "User with id=<id> not found." }` (never leak existence with `403`).
 - Authenticated routes: `Authorization: Bearer <token>`.
