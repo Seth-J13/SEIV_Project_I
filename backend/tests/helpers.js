@@ -43,3 +43,14 @@ export const createTestSession = async (user, overrides = {}) => {
 
   return session;
 };
+
+/** Create a test list for a user */
+export const createTestList = async (user, overrides = {}) => {
+  const list = await db.list.create({
+    name: `List ${Date.now()}`,
+    userId: user.id,
+    ...overrides,
+  });
+
+  return list;
+};
