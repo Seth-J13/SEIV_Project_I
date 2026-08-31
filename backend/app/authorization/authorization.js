@@ -50,3 +50,14 @@ export const getAccessibleListOrNull = async (req, listId) => {
   });
   return row ?? null;
 };
+
+export const getAccessibleTodoOrNull = async (req, todoId) => {
+  const parsedId = parseInt(todoId, 10);
+  if (isNaN(parsedId)) {
+    return null;
+  }
+  const row = await db.todo.findOne({
+    where: { id: parsedId, userId: req.user.id },
+  });
+  return row ?? null;
+};

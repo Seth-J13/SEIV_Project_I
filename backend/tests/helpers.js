@@ -54,3 +54,16 @@ export const createTestList = async (user, overrides = {}) => {
 
   return list;
 };
+
+/** Create a test todo for a user and list */
+export const createTestTodo = async (user, list, overrides = {}) => {
+  const todo = await db.todo.create({
+    title: `Todo ${Date.now()}`,
+    completed: false,
+    listId: list.id,
+    userId: user.id,
+    ...overrides,
+  });
+
+  return todo;
+};

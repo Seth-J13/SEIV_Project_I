@@ -1,6 +1,6 @@
 # Data Model Reference
 
-**Status:** Integrated snapshot on `dev` (Features 1–2).
+**Status:** Integrated snapshot on `dev` (Features 1–3).
 
 ## Provenance
 
@@ -9,6 +9,7 @@
 | `users` | Feature 1 |
 | `sessions` | Feature 1 |
 | `lists` | Feature 2 |
+| `todos` | Feature 3 |
 
 ## Tables
 
@@ -44,9 +45,25 @@
 | `createdAt` | DATE | Sequelize timestamps |
 | `updatedAt` | DATE | Sequelize timestamps |
 
+### `todos`
+
+| Field | Type | Rules |
+|-------|------|-------|
+| `id` | INTEGER PK | Auto-increment |
+| `listId` | INTEGER FK | Required, references `lists.id`; cascade on list delete |
+| `title` | STRING(255) | Required; max 255 chars |
+| `completed` | BOOLEAN | Default `false` |
+| `userId` | INTEGER FK | Required, references `users.id` |
+| `createdAt` | DATE | Sequelize timestamps |
+| `updatedAt` | DATE | Sequelize timestamps |
+
 ## Associations
 
 - `User.hasMany(Session, { as: "sessions", foreignKey: "userId", onDelete: "CASCADE" })`
 - `Session.belongsTo(User, { as: "user", foreignKey: "userId" })`
 - `User.hasMany(List, { as: "lists", foreignKey: "userId", onDelete: "CASCADE" })`
 - `List.belongsTo(User, { as: "user", foreignKey: "userId" })`
+- `List.hasMany(Todo, { as: "todos", foreignKey: "listId", onDelete: "CASCADE" })`
+- `Todo.belongsTo(List, { as: "list", foreignKey: "listId" })`
+- `User.hasMany(Todo, { as: "todos", foreignKey: "userId", onDelete: "CASCADE" })`
+- `Todo.belongsTo(User, { as: "user", foreignKey: "userId" })`

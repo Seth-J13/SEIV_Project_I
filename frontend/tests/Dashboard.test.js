@@ -1,12 +1,13 @@
 /**
- * Feature 2 — Todo List Management
- * Spec: features/feature-2-todo-list-management.md
+ * Feature 2 — Todo List Management & Feature 3 — Todo List Item Management
+ * Specs: features/feature-2-todo-list-management.md, features/feature-3-todo-list-item-management.md
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Dashboard from "../src/views/Dashboard.vue";
 import { mountWithPlugins } from "./testUtils.js";
 import listServices from "../src/services/listServices.js";
+import todoServices from "../src/services/todoServices.js";
 
 describe("Feature 2 — Todo List Management", () => {
   beforeEach(() => {
@@ -202,6 +203,349 @@ describe("Feature 2 — Todo List Management", () => {
 
       expect(deleteSpy).toHaveBeenCalledWith(1);
       expect(wrapper.text()).not.toContain("Groceries");
+      wrapper.unmount();
+    });
+  });
+});
+
+describe("Feature 3 — Todo List Item Management", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  describe("US-3.1 — Add tasks to a list", () => {
+    it("User adds a todo to a list via dialog", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({ data: [] });
+      const createTodoSpy = vi.spyOn(todoServices, "create").mockResolvedValueOnce({
+        data: { id: 10, listId: 1, title: "Buy milk", completed: false, userId: 1 },
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Click "Items" icon
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      expect(itemsBtn.exists()).toBe(true);
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Find "+ Add Item" button
+      const addItemBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.textContent.includes("+ Add Item")
+      );
+      expect(addItemBtn).toBeDefined();
+      addItemBtn.click();
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Find input for todo title
+      const dialogInputs = document.body.querySelectorAll(".v-dialog input");
+      const titleInput = dialogInputs[dialogInputs.length - 1];
+      titleInput.value = "Buy milk";
+      titleInput.dispatchEvent(new Event("input"));
+      await wrapper.vm.$nextTick();
+
+      // Click "Add" button
+      const addBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.textContent.trim() === "Add"
+      );
+      expect(addBtn).toBeDefined();
+      addBtn.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wrapper.vm.$nextTick();
+
+      expect(createTodoSpy).toHaveBeenCalledWith(1, { title: "Buy milk" });
+      expect(document.body.textContent).toContain("Buy milk");
+      wrapper.unmount();
+    });
+
+    it("User adds a todo with an empty title", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({ data: [] });
+      const createTodoSpy = vi.spyOn(todoServices, "create");
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Open items dialog
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Click "+ Add Item"
+      const addItemBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.textContent.includes("+ Add Item")
+      );
+      addItemBtn.click();
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Click "Add" with empty title
+      const addBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.textContent.trim() === "Add"
+      );
+      addBtn.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wrapper.vm.$nextTick();
+
+      expect(document.body.textContent).toContain("Todo title is required.");
+      expect(createTodoSpy).not.toHaveBeenCalled();
+      wrapper.unmount();
+    });
+
+    it("Add item is only available inside the items dialog", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard);
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Main lists view should not have "+ Add Item" button
+      expect(wrapper.text()).not.toContain("+ Add Item");
+      wrapper.unmount();
+    });
+  });
+
+  describe("US-3.2 — View tasks in a list", () => {
+    it("List items dialog shows empty state", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Personal", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({ data: [] });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(document.body.textContent).toContain("No todos in this list yet.");
+      wrapper.unmount();
+    });
+
+    it("User opens items for different lists", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [
+          { id: 1, name: "Personal", userId: 1 },
+          { id: 2, name: "Work", userId: 1 },
+        ],
+      });
+      const getTodosSpy = vi
+        .spyOn(todoServices, "getAllForList")
+        .mockResolvedValueOnce({
+          data: [{ id: 101, listId: 1, title: "Call mom", completed: false, userId: 1 }],
+        })
+        .mockResolvedValueOnce({
+          data: [
+            { id: 201, listId: 2, title: "Email client", completed: false, userId: 1 },
+            { id: 202, listId: 2, title: "Write report", completed: false, userId: 1 },
+          ],
+        });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemButtons = wrapper.findAll('[aria-label="Items"]');
+
+      // Open Personal items
+      await itemButtons[0].trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(document.body.textContent).toContain("Call mom");
+      expect(document.body.textContent).not.toContain("Email client");
+
+      // Close Personal items dialog
+      const closeBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.textContent.trim() === "Close"
+      );
+      closeBtn.click();
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Open Work items
+      await itemButtons[1].trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(document.body.textContent).toContain("Email client");
+      expect(document.body.textContent).toContain("Write report");
+      expect(getTodosSpy).toHaveBeenCalledTimes(2);
+
+      wrapper.unmount();
+    });
+  });
+
+  describe("US-3.3 — Complete tasks", () => {
+    it("User marks a todo as complete", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({
+        data: [{ id: 10, listId: 1, title: "Buy milk", completed: false, userId: 1 }],
+      });
+      const updateSpy = vi.spyOn(todoServices, "update").mockResolvedValueOnce({
+        data: { id: 10, listId: 1, title: "Buy milk", completed: true, userId: 1 },
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const checkbox = document.body.querySelector(".v-dialog input[type='checkbox']");
+      expect(checkbox).not.toBeNull();
+      checkbox.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wrapper.vm.$nextTick();
+
+      expect(updateSpy).toHaveBeenCalledWith(10, { completed: true });
+      wrapper.unmount();
+    });
+
+    it("User marks a completed todo as incomplete", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({
+        data: [{ id: 10, listId: 1, title: "Buy milk", completed: true, userId: 1 }],
+      });
+      const updateSpy = vi.spyOn(todoServices, "update").mockResolvedValueOnce({
+        data: { id: 10, listId: 1, title: "Buy milk", completed: false, userId: 1 },
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const checkbox = document.body.querySelector(".v-dialog input[type='checkbox']");
+      checkbox.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wrapper.vm.$nextTick();
+
+      expect(updateSpy).toHaveBeenCalledWith(10, { completed: false });
+      wrapper.unmount();
+    });
+  });
+
+  describe("US-3.4 — Edit and remove tasks", () => {
+    it("User edits a todo title", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({
+        data: [{ id: 10, listId: 1, title: "Buy milk", completed: false, userId: 1 }],
+      });
+      const updateSpy = vi.spyOn(todoServices, "update").mockResolvedValueOnce({
+        data: { id: 10, listId: 1, title: "Buy oat milk", completed: false, userId: 1 },
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Click Edit icon on the todo item
+      const editTodoBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.getAttribute("aria-label") === "Edit todo"
+      );
+      expect(editTodoBtn).toBeDefined();
+      editTodoBtn.click();
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Change title
+      const dialogInputs = document.body.querySelectorAll(".v-dialog input");
+      const titleInput = dialogInputs[dialogInputs.length - 1];
+      titleInput.value = "Buy oat milk";
+      titleInput.dispatchEvent(new Event("input"));
+      await wrapper.vm.$nextTick();
+
+      // Click Save
+      const saveBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.textContent.trim() === "Save"
+      );
+      saveBtn.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wrapper.vm.$nextTick();
+
+      expect(updateSpy).toHaveBeenCalledWith(10, { title: "Buy oat milk" });
+      expect(document.body.textContent).toContain("Buy oat milk");
+      wrapper.unmount();
+    });
+
+    it("User deletes a todo", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({
+        data: [{ id: 10, listId: 1, title: "Buy milk", completed: false, userId: 1 }],
+      });
+      const deleteSpy = vi.spyOn(todoServices, "delete").mockResolvedValueOnce({
+        data: { message: "Todo deleted successfully." },
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Click Delete icon on the todo item
+      const deleteTodoBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.getAttribute("aria-label") === "Delete todo"
+      );
+      expect(deleteTodoBtn).toBeDefined();
+      deleteTodoBtn.click();
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Click Delete button in delete confirmation dialog
+      const confirmDeleteBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.textContent.trim() === "Delete"
+      );
+      expect(confirmDeleteBtn).toBeDefined();
+      confirmDeleteBtn.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wrapper.vm.$nextTick();
+
+      expect(deleteSpy).toHaveBeenCalledWith(10);
+      expect(document.body.textContent).toContain("No todos in this list yet.");
       wrapper.unmount();
     });
   });
