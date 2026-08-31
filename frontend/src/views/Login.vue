@@ -46,8 +46,8 @@ async function handleLogin() {
 </script>
 
 <template>
-  <v-container class="fill-height justify-center" fluid>
-    <v-card width="100%" max-width="440" rounded="lg" elevation="2" class="pa-6">
+  <v-container class="fill-height d-flex align-center justify-center" fluid style="min-height: 100vh;">
+    <v-card width="100%" max-width="440" rounded="lg" elevation="2" class="pa-6 mx-auto">
       <v-card-title class="text-h5 text-center font-weight-bold mb-2">
         Sign in
       </v-card-title>
