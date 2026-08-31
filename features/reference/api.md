@@ -1,6 +1,6 @@
 # API Reference
 
-**Status:** Integrated snapshot on `dev` (Features 1–2).
+**Status:** Integrated snapshot on `dev` (Features 1–3).
 
 Base mount path: `/todo` (Express server).
 
@@ -10,6 +10,7 @@ Base mount path: `/todo` (Express server).
 |------|------------|
 | Authentication & Sessions (`/register`, `/login`, `/logout`) | Feature 1 |
 | Todo Lists (`/lists`, `/lists/:listId`) | Feature 2 |
+| Todo Items (`/lists/:listId/todos`, `/todos/:id`) | Feature 3 |
 
 ## Endpoints
 
@@ -22,6 +23,10 @@ Base mount path: `/todo` (Express server).
 | `POST` | `/todo/lists` | Yes | Create a new list |
 | `PUT` | `/todo/lists/:listId` | Yes | Rename an owned list |
 | `DELETE` | `/todo/lists/:listId` | Yes | Delete an owned list |
+| `GET` | `/todo/lists/:listId/todos` | Yes | Fetch all todos in an owned list |
+| `POST` | `/todo/lists/:listId/todos` | Yes | Add a todo to an owned list |
+| `PUT` | `/todo/todos/:id` | Yes | Update a todo (title and/or completed) |
+| `DELETE` | `/todo/todos/:id` | Yes | Delete an owned todo |
 
 ### Register (`POST /todo/register`)
 
@@ -155,9 +160,88 @@ Base mount path: `/todo` (Express server).
 }
 ```
 
+### Get Todos for List (`GET /todo/lists/:listId/todos`)
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Success response (`200 OK`):**
+```json
+[
+  {
+    "id": 10,
+    "listId": 1,
+    "title": "Buy milk",
+    "completed": false,
+    "userId": 1,
+    "createdAt": "2026-08-31T12:00:00.000Z",
+    "updatedAt": "2026-08-31T12:00:00.000Z"
+  }
+]
+```
+
+### Create Todo (`POST /todo/lists/:listId/todos`)
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request body:**
+```json
+{
+  "title": "Buy milk"
+}
+```
+
+**Success response (`201 Created`):**
+```json
+{
+  "id": 10,
+  "listId": 1,
+  "title": "Buy milk",
+  "completed": false,
+  "userId": 1,
+  "createdAt": "2026-08-31T12:00:00.000Z",
+  "updatedAt": "2026-08-31T12:00:00.000Z"
+}
+```
+
+### Update Todo (`PUT /todo/todos/:id`)
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request body:**
+```json
+{
+  "title": "Buy oat milk",
+  "completed": true
+}
+```
+
+**Success response (`200 OK`):**
+```json
+{
+  "id": 10,
+  "listId": 1,
+  "title": "Buy oat milk",
+  "completed": true,
+  "userId": 1,
+  "createdAt": "2026-08-31T12:00:00.000Z",
+  "updatedAt": "2026-08-31T12:05:00.000Z"
+}
+```
+
+### Delete Todo (`DELETE /todo/todos/:id`)
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Success response (`200 OK`):**
+```json
+{
+  "message": "Todo deleted successfully."
+}
+```
+
 ## Conventions
 
 - Flat JSON responses (no `{ success, data }` envelope).
 - Errors: `{ "message": "Human-readable explanation." }` with appropriate HTTP status code.
-- Not found / not owned: `404` with `{ "message": "List with id=<id> not found." }` (never leak existence with `403`).
+- Not found / not owned: `404` with `{ "message": "List with id=<id> not found." }` or `{ "message": "Todo with id=<id> not found." }` (never leak existence with `403`).
 - Authenticated routes: `Authorization: Bearer <token>`.

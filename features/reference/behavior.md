@@ -19,6 +19,7 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 |------|------------|
 | User authentication & sessions | Feature 1 |
 | Todo lists management & ownership | Feature 2 |
+| Todo items management & ownership | Feature 3 |
 
 ---
 
@@ -44,8 +45,12 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | Lists belong exclusively to the creating user (`userId = req.user.id`). | `list.controller.js` (`create`), `list.model.js` | Feature 2 |
 | `GET /todo/lists` returns only lists owned by `req.user.id`. | `list.controller.js` (`findAll`) | Feature 2 |
 | List queries, updates, and deletes scoped by user ID via `getAccessibleListOrNull`. | `authorization.js`, `list.controller.js` | Feature 2 |
-| Cross-user access returns `404` with `{ message: "List with id=<id> not found." }` (never `403`). | `list.controller.js` (`update`, `delete`) | Feature 2 |
-| Client-supplied `userId` on list creation is ignored and overwritten with `req.user.id`. | `list.controller.js` (`create`) | Feature 2 |
+| Todos belong to exactly one list and one user (`userId = req.user.id`, `listId = list.id`). | `todo.controller.js`, `todo.model.js` | Feature 3 |
+| Todo queries, updates, and deletes scoped by user ID via `getAccessibleTodoOrNull`. | `authorization.js`, `todo.controller.js` | Feature 3 |
+| Adding a todo requires parent list ownership; cross-user attempts return `404`. | `authorization.js`, `todo.controller.js` (`create`) | Feature 3 |
+| Cross-user access returns `404` with `{ message: "List with id=<id> not found." }` or `{ message: "Todo with id=<id> not found." }` (never `403`). | `list.controller.js`, `todo.controller.js` | Feature 2, Feature 3 |
+| Client-supplied `userId` on list or todo creation is ignored and overwritten with `req.user.id`. | `list.controller.js` (`create`), `todo.controller.js` (`create`) | Feature 2, Feature 3 |
+| Deleting a list cascades deletion to all contained todos. | `models/index.js` (`onDelete: CASCADE`), `list.model.js`, `todo.model.js` | Feature 3 |
 
 ### Validation & Sorting Rules
 
@@ -60,6 +65,10 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | List name is required and trimmed before save (empty strings rejected). | `Dashboard.vue`, `list.controller.js` | Feature 2 |
 | List name must be 100 characters or fewer (error: "List name must be 100 characters or fewer."). | `list.controller.js` | Feature 2 |
 | Lists are returned in alphabetical order by name (`ASC`). | `list.controller.js` (`findAll`), `Dashboard.vue` | Feature 2 |
+| Todo title is required and trimmed before save; empty strings rejected with `400` ("Todo title is required."). | `Dashboard.vue`, `todo.controller.js` | Feature 3 |
+| Todo title must be 255 characters or fewer (error: "Todo title must be 255 characters or fewer."). | `todo.controller.js` | Feature 3 |
+| New todos default to `completed: false`. | `todo.model.js`, `todo.controller.js` | Feature 3 |
+| Todos are ordered incomplete first (`completed ASC`), then `createdAt ASC`. | `todo.controller.js` (`findAllByList`) | Feature 3 |
 
 ### UI & Navigation
 
@@ -71,5 +80,9 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | `MenuBar` displayed on protected routes with signed-in user name and Sign out action. | `App.vue`, `MenuBar.vue` | Feature 2 |
 | Dashboard single view at `home` route with list CRUD dialogs and no sidebar split. | `Dashboard.vue`, `router.js` | Feature 2 |
 | Empty lists state displays copy: "No lists yet. Create your first list." | `Dashboard.vue` | Feature 2 |
-| Errors displayed via `<v-alert type="error">`. | `Login.vue`, `Register.vue`, `Dashboard.vue` | Feature 1; updated Feature 2 |
-| Primary CTAs use class `oc-cta`. | `Login.vue`, `Register.vue`, `MenuBar.vue`, `Dashboard.vue` | Feature 1; updated Feature 2 |
+| Each list row includes an Items icon (`aria-label="Items"`) opening a list-items dialog. | `Dashboard.vue` | Feature 3 |
+| List-items dialog shows empty state copy: "No todos in this list yet." | `Dashboard.vue` | Feature 3 |
+| Todo management (add/edit/delete) operates via nested dialogs. | `Dashboard.vue` | Feature 3 |
+| Completed todos show struck-through or muted styling. | `Dashboard.vue` | Feature 3 |
+| Errors displayed via `<v-alert type="error">`. | `Login.vue`, `Register.vue`, `Dashboard.vue` | Feature 1; updated Feature 2; updated Feature 3 |
+| Primary CTAs use class `oc-cta`. | `Login.vue`, `Register.vue`, `MenuBar.vue`, `Dashboard.vue` | Feature 1; updated Feature 2; updated Feature 3 |
