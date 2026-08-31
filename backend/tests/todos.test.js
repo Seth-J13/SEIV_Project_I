@@ -1,6 +1,6 @@
 /**
- * Feature 3 — Todo List Item Management
- * Spec: features/feature-3-todo-list-item-management.md
+ * Feature 3 — Todo List Item Management & Feature 5 — Todo Due Date
+ * Specs: features/feature-3-todo-list-item-management.md, features/feature-5-todo-due-date.md
  */
 
 import request from "supertest";
@@ -280,6 +280,152 @@ describe("Feature 3 — Todo List Item Management", () => {
         where: { id: [todo1.id, todo2.id] },
       });
       expect(remainingTodos.length).toBe(0);
+    });
+  });
+});
+
+describe("Feature 5 — Todo Due Date", () => {
+  describe("US-5.1 — Set a due date when creating a todo", () => {
+    it("User adds a todo with a due date", async () => {
+      const { user } = await createTestUser();
+      const session = await createTestSession(user);
+      const list = await createTestList(user, { name: "Groceries" });
+
+      const res = await request(app)
+        .post(`/todo/lists/${list.id}/todos`)
+        .set("Authorization", `Bearer ${session.token}`)
+        .send({ title: "Buy milk", dueDate: "2026-07-15" });
+
+      expect(res.status).toBe(201);
+      expect(res.body.title).toBe("Buy milk");
+      expect(res.body.dueDate).toBe("2026-07-15");
+
+      const saved = await db.todo.findByPk(res.body.id);
+      expect(saved.dueDate).toBe("2026-07-15");
+    });
+
+    it("User adds a todo without a due date", async () => {
+      const { user } = await createTestUser();
+      const session = await createTestSession(user);
+      const list = await createTestList(user, { name: "Groceries" });
+
+      const res = await request(app)
+        .post(`/todo/lists/${list.id}/todos`)
+        .set("Authorization", `Bearer ${session.token}`)
+        .send({ title: "Buy milk" });
+
+      expect(res.status).toBe(201);
+      expect(res.body.title).toBe("Buy milk");
+      expect(res.body.dueDate).toBeNull();
+    });
+
+    it("API rejects an invalid due date on create", async () => {
+      const { user } = await createTestUser();
+      const session = await createTestSession(user);
+      const list = await createTestList(user, { name: "Groceries" });
+
+      const res = await request(app)
+        .post(`/todo/lists/${list.id}/todos`)
+        .set("Authorization", `Bearer ${session.token}`)
+        .send({ title: "Task", dueDate: "not-a-date" });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe(
+        "Due date must be a valid date in YYYY-MM-DD format."
+      );
+
+      const count = await db.todo.count({ where: { listId: list.id } });
+      expect(count).toBe(0);
+    });
+  });
+
+  describe("US-5.3 — Edit or clear a due date", () => {
+    it("User sets a due date when editing a todo", async () => {
+      const { user } = await createTestUser();
+      const session = await createTestSession(user);
+      const list = await createTestList(user, { name: "Groceries" });
+      const todo = await createTestTodo(user, list, {
+        title: "Buy milk",
+        dueDate: null,
+      });
+
+      const res = await request(app)
+        .put(`/todo/todos/${todo.id}`)
+        .set("Authorization", `Bearer ${session.token}`)
+        .send({ dueDate: "2026-07-20" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.dueDate).toBe("2026-07-20");
+
+      const reloaded = await db.todo.findByPk(todo.id);
+      expect(reloaded.dueDate).toBe("2026-07-20");
+    });
+
+    it("User clears a due date when editing a todo", async () => {
+      const { user } = await createTestUser();
+      const session = await createTestSession(user);
+      const list = await createTestList(user, { name: "Groceries" });
+      const todo = await createTestTodo(user, list, {
+        title: "Buy milk",
+        dueDate: "2026-07-20",
+      });
+
+      const res = await request(app)
+        .put(`/todo/todos/${todo.id}`)
+        .set("Authorization", `Bearer ${session.token}`)
+        .send({ dueDate: null });
+
+      expect(res.status).toBe(200);
+      expect(res.body.dueDate).toBeNull();
+
+      const reloaded = await db.todo.findByPk(todo.id);
+      expect(reloaded.dueDate).toBeNull();
+    });
+
+    it("API rejects an invalid due date on update", async () => {
+      const { user } = await createTestUser();
+      const session = await createTestSession(user);
+      const list = await createTestList(user, { name: "Groceries" });
+      const todo = await createTestTodo(user, list, {
+        title: "Buy milk",
+        dueDate: "2026-07-15",
+      });
+
+      const res = await request(app)
+        .put(`/todo/todos/${todo.id}`)
+        .set("Authorization", `Bearer ${session.token}`)
+        .send({ dueDate: "2026-99-99" });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe(
+        "Due date must be a valid date in YYYY-MM-DD format."
+      );
+
+      const reloaded = await db.todo.findByPk(todo.id);
+      expect(reloaded.dueDate).toBe("2026-07-15");
+    });
+
+    it("User cannot set due date on another user's todo", async () => {
+      const { user: userA } = await createTestUser();
+      const { user: userB } = await createTestUser();
+      const sessionA = await createTestSession(userA);
+
+      const listB = await createTestList(userB, { name: "Secret" });
+      const todoB = await createTestTodo(userB, listB, {
+        title: "Original task",
+        dueDate: "2026-07-10",
+      });
+
+      const res = await request(app)
+        .put(`/todo/todos/${todoB.id}`)
+        .set("Authorization", `Bearer ${sessionA.token}`)
+        .send({ dueDate: "2026-07-15" });
+
+      expect(res.status).toBe(404);
+      expect(res.body.message).toBe(`Todo with id=${todoB.id} not found.`);
+
+      const reloaded = await db.todo.findByPk(todoB.id);
+      expect(reloaded.dueDate).toBe("2026-07-10");
     });
   });
 });

@@ -5,6 +5,24 @@ import {
   getAccessibleTodoOrNull,
 } from "../authorization/authorization.js";
 
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidDueDate(value) {
+  if (value === null || value === undefined || value === "") {
+    return true;
+  }
+  if (typeof value !== "string" || !DATE_ONLY_REGEX.test(value)) {
+    return false;
+  }
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+  );
+}
+
 const exports = {};
 
 exports.findAllByList = async (req, res) => {
@@ -34,7 +52,7 @@ exports.findAllByList = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     const { listId } = req.params;
-    const { title } = req.body || {};
+    const { title, dueDate } = req.body || {};
 
     const list = await getAccessibleListOrNull(req, listId);
     if (!list) {
@@ -53,9 +71,21 @@ exports.create = async (req, res) => {
         .send({ message: "Todo title must be 255 characters or fewer." });
     }
 
+    if (dueDate !== undefined && dueDate !== null && dueDate !== "") {
+      if (!isValidDueDate(dueDate)) {
+        return res
+          .status(400)
+          .send({ message: "Due date must be a valid date in YYYY-MM-DD format." });
+      }
+    }
+
+    const finalDueDate =
+      dueDate && isValidDueDate(dueDate) ? String(dueDate).slice(0, 10) : null;
+
     const todo = await db.todo.create({
       title: trimmedTitle,
       completed: false,
+      dueDate: finalDueDate,
       listId: list.id,
       userId: req.user.id,
     });
@@ -70,7 +100,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, completed } = req.body || {};
+    const { title, completed, dueDate } = req.body || {};
 
     const todo = await getAccessibleTodoOrNull(req, id);
     if (!todo) {
@@ -93,6 +123,19 @@ exports.update = async (req, res) => {
 
     if (completed !== undefined) {
       todo.completed = Boolean(completed);
+    }
+
+    if (dueDate !== undefined) {
+      if (dueDate === null || dueDate === "") {
+        todo.dueDate = null;
+      } else {
+        if (!isValidDueDate(dueDate)) {
+          return res
+            .status(400)
+            .send({ message: "Due date must be a valid date in YYYY-MM-DD format." });
+        }
+        todo.dueDate = String(dueDate).slice(0, 10);
+      }
     }
 
     await todo.save();

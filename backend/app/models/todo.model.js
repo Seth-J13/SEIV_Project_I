@@ -17,6 +17,10 @@ export default (sequelize, Sequelize) => {
       type: Sequelize.BOOLEAN,
       defaultValue: false,
     },
+    dueDate: {
+      type: Sequelize.DATEONLY,
+      allowNull: true,
+    },
     userId: {
       type: Sequelize.INTEGER,
       allowNull: false,

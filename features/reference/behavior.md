@@ -21,6 +21,7 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | Todo lists management & ownership | Feature 2 |
 | Todo items management & ownership | Feature 3 |
 | User profile management | Feature 4 |
+| Todo due date management | Feature 5 |
 
 ---
 
@@ -74,6 +75,9 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | Profile fields (`fName`, `lName`, `email`, `username`) are required and trimmed on update. | `MenuBar.vue`, `user.controller.js` | Feature 4 |
 | Profile username is normalized to lowercase on save. | `user.controller.js` | Feature 4 |
 | Password update is optional on profile edit; when provided, requires at least 8 characters. | `MenuBar.vue`, `user.controller.js` | Feature 4 |
+| `dueDate` is optional on todo create and update (`null` means no due date). | `todo.controller.js`, `Dashboard.vue` | Feature 5 |
+| `dueDate` must be a valid calendar date in `YYYY-MM-DD` format; invalid strings rejected with `400` ("Due date must be a valid date in YYYY-MM-DD format."). | `todo.controller.js`, `frontend/src/config/validation.js` | Feature 5 |
+| Sending `dueDate: null` on `PUT` clears the due date; omitting `dueDate` leaves the existing value unchanged. | `todo.controller.js` | Feature 5 |
 
 ### UI & Navigation
 
@@ -92,5 +96,7 @@ They do **not** authorize new scope — implement only from `features/feature-*.
 | List-items dialog shows empty state copy: "No todos in this list yet." | `Dashboard.vue` | Feature 3 |
 | Todo management (add/edit/delete) operates via nested dialogs. | `Dashboard.vue` | Feature 3 |
 | Completed todos show struck-through or muted styling. | `Dashboard.vue` | Feature 3 |
+| Due dates displayed in readable formatted form (e.g. `Jul 15, 2026`) on todo row. | `Dashboard.vue`, `validation.js` (`formatDueDate`) | Feature 5 |
+| Incomplete todos past due date in local browser calendar display overdue styling (`text-error`). Completed todos do not show overdue styling even if past due. | `Dashboard.vue`, `validation.js` (`isTodoOverdue`) | Feature 5 |
 | Errors displayed via `<v-alert type="error">`. | `Login.vue`, `Register.vue`, `Dashboard.vue`, `MenuBar.vue` | Feature 1; updated Feature 2; updated Feature 3; updated Feature 4 |
 | Primary CTAs use class `oc-cta`. | `Login.vue`, `Register.vue`, `MenuBar.vue`, `Dashboard.vue` | Feature 1; updated Feature 2; updated Feature 3; updated Feature 4 |
