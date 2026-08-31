@@ -1,6 +1,6 @@
 # Data Model Reference
 
-**Status:** Integrated snapshot on `dev` (Features 1–4).
+**Status:** Integrated snapshot on `dev` (Features 1–5).
 
 ## Provenance
 
@@ -9,7 +9,7 @@
 | `users` | Feature 1; updated Feature 4 |
 | `sessions` | Feature 1 |
 | `lists` | Feature 2 |
-| `todos` | Feature 3 |
+| `todos` | Feature 3; updated Feature 5 |
 
 ## Tables
 
@@ -53,6 +53,7 @@
 | `listId` | INTEGER FK | Required, references `lists.id`; cascade on list delete |
 | `title` | STRING(255) | Required; max 255 chars |
 | `completed` | BOOLEAN | Default `false` |
+| `dueDate` | DATEONLY | Nullable; optional on create/update (`YYYY-MM-DD`) |
 | `userId` | INTEGER FK | Required, references `users.id` |
 | `createdAt` | DATE | Sequelize timestamps |
 | `updatedAt` | DATE | Sequelize timestamps |

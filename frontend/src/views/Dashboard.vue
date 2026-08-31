@@ -2,6 +2,12 @@
 import { ref, onMounted } from "vue";
 import listServices from "../services/listServices.js";
 import todoServices from "../services/todoServices.js";
+import {
+  formatDueDate,
+  isTodoOverdue,
+  optionalDueDateRules,
+  toDateInputValue,
+} from "../config/validation.js";
 
 const lists = ref([]);
 const loading = ref(false);
@@ -36,11 +42,13 @@ const todoSaving = ref(false);
 const addTodoDialog = ref(false);
 const addTodoForm = ref(null);
 const newTodoTitle = ref("");
+const newTodoDueDate = ref("");
 
 const editTodoDialog = ref(false);
 const editTodoForm = ref(null);
 const editingTodo = ref(null);
 const editTodoTitle = ref("");
+const editTodoDueDate = ref("");
 
 const deleteTodoDialog = ref(false);
 const deletingTodo = ref(null);
@@ -166,6 +174,7 @@ async function fetchTodos(listId) {
 
 function openAddTodoDialog() {
   newTodoTitle.value = "";
+  newTodoDueDate.value = "";
   todosError.value = "";
   addTodoDialog.value = true;
 }
@@ -178,12 +187,17 @@ async function handleAddTodo() {
   todoSaving.value = true;
   todosError.value = "";
   try {
-    const res = await todoServices.create(selectedList.value.id, {
+    const payload = {
       title: newTodoTitle.value.trim(),
-    });
+    };
+    if (newTodoDueDate.value) {
+      payload.dueDate = newTodoDueDate.value;
+    }
+    const res = await todoServices.create(selectedList.value.id, payload);
     todos.value.push(res.data);
     addTodoDialog.value = false;
     newTodoTitle.value = "";
+    newTodoDueDate.value = "";
   } catch (err) {
     todosError.value = err.response?.data?.message || "Failed to add todo.";
   } finally {
@@ -207,6 +221,7 @@ async function handleToggleTodo(todo) {
 function openEditTodoDialog(todo) {
   editingTodo.value = todo;
   editTodoTitle.value = todo.title;
+  editTodoDueDate.value = todo.dueDate ? toDateInputValue(todo.dueDate) : "";
   todosError.value = "";
   editTodoDialog.value = true;
 }
@@ -219,9 +234,11 @@ async function handleEditTodo() {
   todoSaving.value = true;
   todosError.value = "";
   try {
-    const res = await todoServices.update(editingTodo.value.id, {
+    const payload = {
       title: editTodoTitle.value.trim(),
-    });
+      dueDate: editTodoDueDate.value ? editTodoDueDate.value : null,
+    };
+    const res = await todoServices.update(editingTodo.value.id, payload);
     const index = todos.value.findIndex((t) => t.id === editingTodo.value.id);
     if (index !== -1) {
       todos.value[index] = res.data;
@@ -504,7 +521,7 @@ onMounted(() => {
           No todos in this list yet.
         </div>
 
-        <v-list v-else lines="one" class="py-0">
+        <v-list v-else lines="two" class="py-0">
           <template v-for="(todo, index) in todos" :key="todo.id">
             <v-list-item class="px-2 py-1">
               <template #prepend>
@@ -524,6 +541,17 @@ onMounted(() => {
               >
                 {{ todo.title }}
               </v-list-item-title>
+
+              <v-list-item-subtitle
+                v-if="todo.dueDate"
+                :class="{
+                  'text-error font-weight-medium': !todo.completed && isTodoOverdue(todo),
+                  'text-medium-emphasis': todo.completed || !isTodoOverdue(todo),
+                }"
+                class="text-caption due-date-text"
+              >
+                Due: {{ formatDueDate(todo.dueDate) }}
+              </v-list-item-subtitle>
 
               <template #append>
                 <v-btn
@@ -578,6 +606,16 @@ onMounted(() => {
               variant="outlined"
               autofocus
               required
+              class="mb-2"
+            />
+            <v-text-field
+              v-model="newTodoDueDate"
+              label="Due Date (optional)"
+              type="date"
+              :rules="optionalDueDateRules"
+              density="comfortable"
+              rounded="lg"
+              variant="outlined"
             />
           </v-form>
         </v-card-text>
@@ -620,6 +658,16 @@ onMounted(() => {
               variant="outlined"
               autofocus
               required
+              class="mb-2"
+            />
+            <v-text-field
+              v-model="editTodoDueDate"
+              label="Due Date (optional)"
+              type="date"
+              :rules="optionalDueDateRules"
+              density="comfortable"
+              rounded="lg"
+              variant="outlined"
             />
           </v-form>
         </v-card-text>

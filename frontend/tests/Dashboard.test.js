@@ -1,6 +1,6 @@
 /**
- * Feature 2 — Todo List Management & Feature 3 — Todo List Item Management
- * Specs: features/feature-2-todo-list-management.md, features/feature-3-todo-list-item-management.md
+ * Feature 2 — Todo List Management, Feature 3 — Todo List Item Management, & Feature 5 — Todo Due Date
+ * Specs: features/feature-2-todo-list-management.md, features/feature-3-todo-list-item-management.md, features/feature-5-todo-due-date.md
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -36,15 +36,19 @@ describe("Feature 2 — Todo List Management", () => {
       await wrapper.vm.$nextTick();
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Find input inside dialog
-      const input = document.body.querySelector(".v-dialog input");
+      // Find input inside Create dialog
+      const dialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("New List")
+      );
+      expect(dialogEl).toBeDefined();
+      const input = dialogEl.querySelector("input");
       expect(input).not.toBeNull();
       input.value = "Groceries";
       input.dispatchEvent(new Event("input"));
       await wrapper.vm.$nextTick();
 
       // Find Create button inside dialog
-      const createBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+      const createBtn = Array.from(dialogEl.querySelectorAll("button")).find(
         (b) => b.textContent.trim() === "Create"
       );
       expect(createBtn).toBeDefined();
@@ -71,8 +75,10 @@ describe("Feature 2 — Todo List Management", () => {
       await wrapper.vm.$nextTick();
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Leave empty and click Create
-      const createBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+      const dialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("New List")
+      );
+      const createBtn = Array.from(dialogEl.querySelectorAll("button")).find(
         (b) => b.textContent.trim() === "Create"
       );
       expect(createBtn).toBeDefined();
@@ -153,15 +159,18 @@ describe("Feature 2 — Todo List Management", () => {
       await wrapper.vm.$nextTick();
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Find input inside dialog and change value
-      const input = document.body.querySelector(".v-dialog input");
+      const dialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("Rename List")
+      );
+      expect(dialogEl).toBeDefined();
+      const input = dialogEl.querySelector("input");
       expect(input).not.toBeNull();
       input.value = "Shopping";
       input.dispatchEvent(new Event("input"));
       await wrapper.vm.$nextTick();
 
       // Click Save
-      const saveBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+      const saveBtn = Array.from(dialogEl.querySelectorAll("button")).find(
         (b) => b.textContent.trim() === "Save"
       );
       expect(saveBtn).toBeDefined();
@@ -192,8 +201,11 @@ describe("Feature 2 — Todo List Management", () => {
       await wrapper.vm.$nextTick();
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Click Delete button in dialog
-      const confirmDeleteBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+      const dialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("Delete List")
+      );
+      expect(dialogEl).toBeDefined();
+      const confirmDeleteBtn = Array.from(dialogEl.querySelectorAll("button")).find(
         (b) => b.textContent.trim() === "Delete"
       );
       expect(confirmDeleteBtn).toBeDefined();
@@ -247,15 +259,18 @@ describe("Feature 3 — Todo List Item Management", () => {
       await wrapper.vm.$nextTick();
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Find input for todo title
-      const dialogInputs = document.body.querySelectorAll(".v-dialog input");
-      const titleInput = dialogInputs[dialogInputs.length - 1];
+      // Find input for todo title inside New Todo dialog
+      const addDialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("New Todo")
+      );
+      expect(addDialogEl).toBeDefined();
+      const titleInput = addDialogEl.querySelector("input:not([type='date']):not([type='checkbox'])");
       titleInput.value = "Buy milk";
       titleInput.dispatchEvent(new Event("input"));
       await wrapper.vm.$nextTick();
 
       // Click "Add" button
-      const addBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+      const addBtn = Array.from(addDialogEl.querySelectorAll("button")).find(
         (b) => b.textContent.trim() === "Add"
       );
       expect(addBtn).toBeDefined();
@@ -293,8 +308,11 @@ describe("Feature 3 — Todo List Item Management", () => {
       await wrapper.vm.$nextTick();
       await new Promise((resolve) => setTimeout(resolve, 50));
 
+      const addDialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("New Todo")
+      );
       // Click "Add" with empty title
-      const addBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+      const addBtn = Array.from(addDialogEl.querySelectorAll("button")).find(
         (b) => b.textContent.trim() === "Add"
       );
       addBtn.click();
@@ -375,7 +393,10 @@ describe("Feature 3 — Todo List Item Management", () => {
       expect(document.body.textContent).not.toContain("Email client");
 
       // Close Personal items dialog
-      const closeBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+      const itemsDialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("Personal — Items")
+      );
+      const closeBtn = Array.from(itemsDialogEl.querySelectorAll("button")).find(
         (b) => b.textContent.trim() === "Close"
       );
       closeBtn.click();
@@ -486,22 +507,25 @@ describe("Feature 3 — Todo List Item Management", () => {
       await wrapper.vm.$nextTick();
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Change title
-      const dialogInputs = document.body.querySelectorAll(".v-dialog input");
-      const titleInput = dialogInputs[dialogInputs.length - 1];
+      // Change title in Edit Todo dialog
+      const editDialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("Edit Todo")
+      );
+      expect(editDialogEl).toBeDefined();
+      const titleInput = editDialogEl.querySelector("input:not([type='date']):not([type='checkbox'])");
       titleInput.value = "Buy oat milk";
       titleInput.dispatchEvent(new Event("input"));
       await wrapper.vm.$nextTick();
 
       // Click Save
-      const saveBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+      const saveBtn = Array.from(editDialogEl.querySelectorAll("button")).find(
         (b) => b.textContent.trim() === "Save"
       );
       saveBtn.click();
       await new Promise((resolve) => setTimeout(resolve, 50));
       await wrapper.vm.$nextTick();
 
-      expect(updateSpy).toHaveBeenCalledWith(10, { title: "Buy oat milk" });
+      expect(updateSpy).toHaveBeenCalledWith(10, { title: "Buy oat milk", dueDate: null });
       expect(document.body.textContent).toContain("Buy oat milk");
       wrapper.unmount();
     });
@@ -536,7 +560,11 @@ describe("Feature 3 — Todo List Item Management", () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Click Delete button in delete confirmation dialog
-      const confirmDeleteBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+      const deleteDialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("Delete Todo")
+      );
+      expect(deleteDialogEl).toBeDefined();
+      const confirmDeleteBtn = Array.from(deleteDialogEl.querySelectorAll("button")).find(
         (b) => b.textContent.trim() === "Delete"
       );
       expect(confirmDeleteBtn).toBeDefined();
@@ -546,6 +574,243 @@ describe("Feature 3 — Todo List Item Management", () => {
 
       expect(deleteSpy).toHaveBeenCalledWith(10);
       expect(document.body.textContent).toContain("No todos in this list yet.");
+      wrapper.unmount();
+    });
+  });
+});
+
+describe("Feature 5 — Todo Due Date", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  describe("US-5.1 — Set a due date when creating a todo", () => {
+    it("User adds a todo with a due date", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({ data: [] });
+      const createTodoSpy = vi.spyOn(todoServices, "create").mockResolvedValueOnce({
+        data: {
+          id: 10,
+          listId: 1,
+          title: "Buy milk",
+          completed: false,
+          dueDate: "2026-07-15",
+          userId: 1,
+        },
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Open items dialog
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Click "+ Add Item"
+      const addItemBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.textContent.includes("+ Add Item")
+      );
+      addItemBtn.click();
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const addDialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("New Todo")
+      );
+      expect(addDialogEl).toBeDefined();
+      const titleInput = addDialogEl.querySelector("input:not([type='date']):not([type='checkbox'])");
+      const dateInput = addDialogEl.querySelector("input[type='date']");
+
+      titleInput.value = "Buy milk";
+      titleInput.dispatchEvent(new Event("input"));
+      dateInput.value = "2026-07-15";
+      dateInput.dispatchEvent(new Event("input"));
+      await wrapper.vm.$nextTick();
+
+      // Click "Add"
+      const addBtn = Array.from(addDialogEl.querySelectorAll("button")).find(
+        (b) => b.textContent.trim() === "Add"
+      );
+      addBtn.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wrapper.vm.$nextTick();
+
+      expect(createTodoSpy).toHaveBeenCalledWith(1, {
+        title: "Buy milk",
+        dueDate: "2026-07-15",
+      });
+      expect(document.body.textContent).toContain("Jul 15, 2026");
+      wrapper.unmount();
+    });
+  });
+
+  describe("US-5.3 — Edit or clear a due date", () => {
+    it("User sets a due date when editing a todo", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({
+        data: [{ id: 10, listId: 1, title: "Buy milk", completed: false, dueDate: null, userId: 1 }],
+      });
+      const updateSpy = vi.spyOn(todoServices, "update").mockResolvedValueOnce({
+        data: { id: 10, listId: 1, title: "Buy milk", completed: false, dueDate: "2026-07-20", userId: 1 },
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const editTodoBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.getAttribute("aria-label") === "Edit todo"
+      );
+      editTodoBtn.click();
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const editDialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("Edit Todo")
+      );
+      expect(editDialogEl).toBeDefined();
+      const dateInput = editDialogEl.querySelector("input[type='date']");
+      dateInput.value = "2026-07-20";
+      dateInput.dispatchEvent(new Event("input"));
+      await wrapper.vm.$nextTick();
+
+      const saveBtn = Array.from(editDialogEl.querySelectorAll("button")).find(
+        (b) => b.textContent.trim() === "Save"
+      );
+      saveBtn.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wrapper.vm.$nextTick();
+
+      expect(updateSpy).toHaveBeenCalledWith(10, {
+        title: "Buy milk",
+        dueDate: "2026-07-20",
+      });
+      expect(document.body.textContent).toContain("Jul 20, 2026");
+      wrapper.unmount();
+    });
+
+    it("User clears a due date when editing a todo", async () => {
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({
+        data: [{ id: 10, listId: 1, title: "Buy milk", completed: false, dueDate: "2026-07-20", userId: 1 }],
+      });
+      const updateSpy = vi.spyOn(todoServices, "update").mockResolvedValueOnce({
+        data: { id: 10, listId: 1, title: "Buy milk", completed: false, dueDate: null, userId: 1 },
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const editTodoBtn = Array.from(document.body.querySelectorAll(".v-dialog button")).find(
+        (b) => b.getAttribute("aria-label") === "Edit todo"
+      );
+      editTodoBtn.click();
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const editDialogEl = Array.from(document.body.querySelectorAll(".v-dialog")).find((d) =>
+        d.textContent.includes("Edit Todo")
+      );
+      expect(editDialogEl).toBeDefined();
+      const dateInput = editDialogEl.querySelector("input[type='date']");
+      dateInput.value = "";
+      dateInput.dispatchEvent(new Event("input"));
+      await wrapper.vm.$nextTick();
+
+      const saveBtn = Array.from(editDialogEl.querySelectorAll("button")).find(
+        (b) => b.textContent.trim() === "Save"
+      );
+      saveBtn.click();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await wrapper.vm.$nextTick();
+
+      expect(updateSpy).toHaveBeenCalledWith(10, {
+        title: "Buy milk",
+        dueDate: null,
+      });
+      expect(document.body.textContent).not.toContain("Jul 20, 2026");
+      wrapper.unmount();
+    });
+  });
+
+  describe("US-5.4 — Spot overdue todos", () => {
+    it("Incomplete todo past due date is styled as overdue", async () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({
+        data: [{ id: 10, listId: 1, title: "Buy milk", completed: false, dueDate: yesterdayStr, userId: 1 }],
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const dateSubtitle = document.body.querySelector(".due-date-text");
+      expect(dateSubtitle).not.toBeNull();
+      expect(dateSubtitle.classList.contains("text-error")).toBe(true);
+
+      wrapper.unmount();
+    });
+
+    it("Completed todo past due date is not styled as overdue", async () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+      vi.spyOn(listServices, "getAll").mockResolvedValueOnce({
+        data: [{ id: 1, name: "Groceries", userId: 1 }],
+      });
+      vi.spyOn(todoServices, "getAllForList").mockResolvedValueOnce({
+        data: [{ id: 10, listId: 1, title: "Buy milk", completed: true, dueDate: yesterdayStr, userId: 1 }],
+      });
+
+      const { wrapper } = await mountWithPlugins(Dashboard, { attachTo: document.body });
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const itemsBtn = wrapper.find('[aria-label="Items"]');
+      await itemsBtn.trigger("click");
+      await wrapper.vm.$nextTick();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const dateSubtitle = document.body.querySelector(".due-date-text");
+      expect(dateSubtitle).not.toBeNull();
+      expect(dateSubtitle.classList.contains("text-error")).toBe(false);
+
       wrapper.unmount();
     });
   });

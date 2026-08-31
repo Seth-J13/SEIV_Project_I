@@ -1,6 +1,6 @@
 # API Reference
 
-**Status:** Integrated snapshot on `dev` (Features 1–4).
+**Status:** Integrated snapshot on `dev` (Features 1–5).
 
 Base mount path: `/todo` (Express server).
 
@@ -10,7 +10,7 @@ Base mount path: `/todo` (Express server).
 |------|------------|
 | Authentication & Sessions (`/register`, `/login`, `/logout`) | Feature 1 |
 | Todo Lists (`/lists`, `/lists/:listId`) | Feature 2 |
-| Todo Items (`/lists/:listId/todos`, `/todos/:id`) | Feature 3 |
+| Todo Items (`/lists/:listId/todos`, `/todos/:id`) | Feature 3; updated Feature 5 |
 | User Profile (`/users/:id`) | Feature 4 |
 
 ## Endpoints
@@ -25,8 +25,8 @@ Base mount path: `/todo` (Express server).
 | `PUT` | `/todo/lists/:listId` | Yes | Rename an owned list |
 | `DELETE` | `/todo/lists/:listId` | Yes | Delete an owned list |
 | `GET` | `/todo/lists/:listId/todos` | Yes | Fetch all todos in an owned list |
-| `POST` | `/todo/lists/:listId/todos` | Yes | Add a todo to an owned list |
-| `PUT` | `/todo/todos/:id` | Yes | Update a todo (title and/or completed) |
+| `POST` | `/todo/lists/:listId/todos` | Yes | Add a todo to an owned list (optional `dueDate`) |
+| `PUT` | `/todo/todos/:id` | Yes | Update a todo (title, completed, and/or `dueDate`) |
 | `DELETE` | `/todo/todos/:id` | Yes | Delete an owned todo |
 | `GET` | `/todo/users/:id` | Yes | Fetch authenticated user's profile |
 | `PUT` | `/todo/users/:id` | Yes | Update authenticated user's profile |
@@ -175,6 +175,7 @@ Base mount path: `/todo` (Express server).
     "listId": 1,
     "title": "Buy milk",
     "completed": false,
+    "dueDate": "2026-07-15",
     "userId": 1,
     "createdAt": "2026-08-31T12:00:00.000Z",
     "updatedAt": "2026-08-31T12:00:00.000Z"
@@ -189,9 +190,12 @@ Base mount path: `/todo` (Express server).
 **Request body:**
 ```json
 {
-  "title": "Buy milk"
+  "title": "Buy milk",
+  "dueDate": "2026-07-15"
 }
 ```
+
+`dueDate` is optional. Omit it or pass `null` for no due date.
 
 **Success response (`201 Created`):**
 ```json
@@ -200,6 +204,7 @@ Base mount path: `/todo` (Express server).
   "listId": 1,
   "title": "Buy milk",
   "completed": false,
+  "dueDate": "2026-07-15",
   "userId": 1,
   "createdAt": "2026-08-31T12:00:00.000Z",
   "updatedAt": "2026-08-31T12:00:00.000Z"
@@ -214,9 +219,12 @@ Base mount path: `/todo` (Express server).
 ```json
 {
   "title": "Buy oat milk",
-  "completed": true
+  "completed": true,
+  "dueDate": "2026-07-20"
 }
 ```
+
+To clear a due date, send `{ "dueDate": null }`.
 
 **Success response (`200 OK`):**
 ```json
@@ -225,6 +233,7 @@ Base mount path: `/todo` (Express server).
   "listId": 1,
   "title": "Buy oat milk",
   "completed": true,
+  "dueDate": "2026-07-20",
   "userId": 1,
   "createdAt": "2026-08-31T12:00:00.000Z",
   "updatedAt": "2026-08-31T12:05:00.000Z"
